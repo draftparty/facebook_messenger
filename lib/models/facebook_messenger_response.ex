@@ -67,6 +67,17 @@ defmodule FacebookMessenger.Response do
     |> hd
   end
 
+  @doc """
+  Return user defined postback payload from a `FacebookMessenger.Response`
+  """
+  @spec get_referral(FacebookMessenger.Response) :: FacebookMessenger.Referral.t
+  def get_referral(%{entry: entries}) do
+    entries
+    |> get_messaging_struct
+    |> Enum.map(&Map.get(&1, :referral))
+    |> hd
+  end
+
   defp get_parser(param) when is_binary(param) do
     cond do
       String.match?(param, @postback_regex) -> postback_parser
@@ -80,6 +91,7 @@ defmodule FacebookMessenger.Response do
     cond do
       Map.has_key?(messaging, "postback") -> postback_parser
       Map.has_key?(messaging, "message") -> text_message_parser
+      Map.has_key?(messaging, "referral") -> referral_parser
     end
   end
 
@@ -102,6 +114,15 @@ defmodule FacebookMessenger.Response do
       "sender": %FacebookMessenger.User{},
       "recipient": %FacebookMessenger.User{},
       "message": %FacebookMessenger.Message{}
+    }
+  end
+
+  defp referral_parser do
+    %FacebookMessenger.Messaging{
+      "type": "referral",
+      "sender": %FacebookMessenger.User{},
+      "recipient": %FacebookMessenger.User{},
+      "referral": %FacebookMessenger.Referral{}
     }
   end
 
